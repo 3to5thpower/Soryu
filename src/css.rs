@@ -133,8 +133,11 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    todo!("you need to implement this");
-    (char(' '),).map(|_| vec![])
+    let whitespaces = || many::<String, _, _>(space().or(newline()));
+    sep_end_by(
+        declaration().skip(whitespaces()),
+        char::char(';').skip(whitespaces()),
+    )
 }
 
 fn declaration<Input>() -> impl Parser<Input, Output = Declaration>
@@ -142,11 +145,13 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    todo!("you need to implement this");
-    (char(' '),).map(|_| Declaration {
-        name: "".into(),
-        value: CSSValue::Keyword("".into()),
-    })
+    let whitespaces = || many::<String, _, _>(space().or(newline()));
+    (
+        many1(letter()).skip(whitespaces()),
+        char::char(':').skip(whitespaces()),
+        css_value(),
+    )
+        .map(|(k, _, v)| Declaration { name: k, value: v })
 }
 
 fn css_value<Input>() -> impl Parser<Input, Output = CSSValue>
@@ -154,8 +159,8 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    todo!("you need to implement this");
-    (char(' '),).map(|_| CSSValue::Keyword("".into()))
+    let keyword = many1(letter()).map(|s| CSSValue::Keyword(s));
+    keyword
 }
 
 #[cfg(test)]
