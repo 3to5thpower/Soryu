@@ -78,7 +78,7 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    many1(satisfy(|c: char| c != '<')).map(|t| Text::new(t))
+    many1(satisfy(|c: char| c != '<')).map(Text::new)
 }
 
 /// `element` consumes `<tag_name attr_name="attr_value" ...>(children)</tag_name>`.
