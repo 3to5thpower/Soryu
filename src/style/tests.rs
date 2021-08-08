@@ -1,53 +1,137 @@
-use crate::{
-    css::{CSSValue, Stylesheet},
-    dom::{Node, NodeType},
-};
-
-use std::collections::HashMap;
-
-pub type PropertyMap = HashMap<String, CSSValue>;
-
-#[derive(Debug, PartialEq)]
-pub enum Display {
-    Inline,
-    Block,
-    None,
-}
-
-/// `StyleNode` wraps `Node` with related CSS properties.
-/// It forms a tree as `Node` does.
-#[derive(Debug, PartialEq)]
-pub struct StyledNode<'a> {
-    pub node_type: &'a NodeType,
-    pub children: Vec<StyledNode<'a>>,
-    pub properties: PropertyMap,
-}
-
-pub fn to_styled_node<'a>(node: &'a Box<Node>, stylesheet: &Stylesheet) -> Option<StyledNode<'a>> {
-    todo!("you need to implement this");
-}
-
-impl<'a> StyledNode<'a> {
-    pub fn display(&self) -> Display {
-        match self.properties.get("display") {
-            Some(CSSValue::Keyword(s)) => match s.as_str() {
-                "block" => Display::Block,
-                "none" => Display::None,
-                _ => Display::Inline,
-            },
-            _ => Display::Inline,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::{
-        css::{AttributeSelectorOp, Declaration, Rule, SimpleSelector},
+        css::{Stylesheet,CSSValue, AttributeSelectorOp, Declaration, Rule, SimpleSelector},
         dom::Element,
+        style::{StyledNode,to_styled_node}
     };
 
-    use super::*;
+
+    #[test]
+    fn test_universal_selector_begaviour() {
+        let e = &Element::new(
+            "p".to_owned(),
+            [("id".to_owned(), "test".to_owned()),
+            ("class".to_owned(), "testclass".to_owned())]
+            .iter().cloned().collect(),
+            vec![],
+        );
+        assert_eq!(SimpleSelector::UniversalSelector.matches(e), true);
+    }
+     #[test]
+    fn test_type_selector_behaviour() {
+        let e = &Element::new(
+            "p".to_string(),
+            [("id".to_string(), "test".to_string()),
+            ("class".to_string(), "testclass".to_string())]
+                .iter()
+                .cloned()
+                .collect(),
+            vec![],
+        );
+
+        assert_eq!(
+            (SimpleSelector::TypeSelector {
+                tag_name: "p".into(),
+            })
+            .matches(e),
+            true
+        );
+
+        assert_eq!(
+            (SimpleSelector::TypeSelector {
+                tag_name: "invalid".into(),
+            })
+            .matches(e),
+            false
+        );
+    }
+
+    #[test]
+    fn test_attribute_selector_behaviour() {
+        let e = &Element::new(
+            "p".to_string(),
+            [("id".to_string(), "test".to_string()),
+            ("class".to_string(), "testclass".to_string())]
+                .iter()
+                .cloned()
+                .collect(),
+            vec![],
+        );
+
+        assert_eq!(
+            (SimpleSelector::AttributeSelector {
+                tag_name: "p".into(),
+                attribute: "id".into(),
+                value: "test".into(),
+                op: AttributeSelectorOp::Eq,
+            })
+            .matches(e),
+            true
+        );
+
+        assert_eq!(
+            (SimpleSelector::AttributeSelector {
+                tag_name: "p".into(),
+                attribute: "id".into(),
+                value: "invalid".into(),
+                op: AttributeSelectorOp::Eq,
+            })
+            .matches(e),
+            false
+        );
+
+        assert_eq!(
+            (SimpleSelector::AttributeSelector {
+                tag_name: "p".into(),
+                attribute: "invalid".into(),
+                value: "test".into(),
+                op: AttributeSelectorOp::Eq,
+            })
+            .matches(e),
+            false
+        );
+
+        assert_eq!(
+            (SimpleSelector::AttributeSelector {
+                tag_name: "invalid".into(),
+                attribute: "id".into(),
+                value: "test".into(),
+                op: AttributeSelectorOp::Eq,
+            })
+            .matches(e),
+            false
+        );
+    }
+
+    #[test]
+    fn test_class_selector_behaviour() {
+        let e = &Element::new(
+            "p".to_string(),
+            [("id".to_string(), "test".to_string()),
+            ("class".to_string(), "testclass".to_string())]
+                .iter()
+                .cloned()
+                .collect(),
+            vec![],
+        );
+
+        assert_eq!(
+            (SimpleSelector::ClassSelector {
+                class_name: "testclass".into(),
+            })
+            .matches(e),
+            true
+        );
+
+        assert_eq!(
+            (SimpleSelector::ClassSelector {
+                class_name: "invalid".into(),
+            })
+            .matches(e),
+            false
+        );
+    }
 
     #[test]
     fn test_to_styled_node_single() {
