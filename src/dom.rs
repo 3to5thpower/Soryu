@@ -45,3 +45,18 @@ impl Text {
         })
     }
 }
+
+impl Node {
+    pub fn inner_text(&self) -> String {
+        self.children
+            .iter()
+            .clone()
+            .into_iter()
+            .map(|node| match &node.node_type {
+                NodeType::Text(t) => t.data.clone(),
+                _ => node.inner_text(),
+            })
+            .collect::<Vec<_>>()
+            .join("")
+    }
+}
